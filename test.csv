@@ -1,3 +1,4 @@
 Activation Function,Train Accuracy,Test Accuracy,LR,Epochs,#Layers,#HiddenNodes
-sigmoid,0.11236666666666667,0.1135,0.02,10,3,"2, 3, 2"
-tanh,0.12165,0.123,0.02,10,3,"2, 3, 2"
+sigmoid,0.12175,0.1254,0.1,10000,1,250
+tanh,0.12165,0.123,0.02,10000,3,"2, 3, 2"
+tanh,0.1123,0.1135,0.02,10000,3,"20, 10, 5"

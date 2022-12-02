@@ -79,16 +79,18 @@ def initializeWeight(nodes, is_bias):
     return np.array(weights), biases
 
 
-def build_NN(x, y, is_bias, nodes, epochs = 2, eta = 0.1, method = 'sigmoid'):
+def build_NN(x, y, is_bias, nodes, epochs, eta, method):
     print(f'============================= start building NN ===========================================')
     print(f'activation = {method}, eta = {eta}, epochs = {epochs}, layers = {len(nodes)}, nodes = {nodes}')
     weights, biases = initializeWeight(nodes, is_bias)
-    for i in range(epochs):
+    # for i in range(epochs):
         # print(f'epoch = {i}')
-        for index, row in x.iterrows():
-            layers_output, predictions = forwardpropagation(row, y[index], weights, nodes, is_bias, biases, method)
-            sigma = backpropagation(y[index], nodes, weights, layers_output)
-            weights = update_weights(sigma, weights, biases, eta, row, layers_output, nodes)
+    for index, row in x.iterrows():
+        layers_output, predictions = forwardpropagation(row, y[index], weights, nodes, is_bias, biases, method)
+        sigma = backpropagation(y[index], nodes, weights, layers_output)
+        weights = update_weights(sigma, weights, biases, eta, row, layers_output, nodes)
+        if index == epochs:
+            break
     print(f'============================= NN is ready to use ===========================================')
     # print(f'weights after training = {weights}')
     return weights, biases
@@ -132,7 +134,9 @@ def backpropagation(y, nodes, weights, layers_output):
         else:
             for j in range(nodes[i]):
                 # print(f'layers_output = {layers_output[i][j]}')
-                hidden_sigma = sum(last_sigma * weights[i+1][j]) * (layers_output[i][j]) * (1 - layers_output[i][j])
+                # e = sum(last_sigma * weights[i+1][j])
+                e = np.dot(last_sigma, weights[i+1][j])
+                hidden_sigma = e * (layers_output[i][j]) * (1 - layers_output[i][j])
                 sigma.append(hidden_sigma)
         sigma = killFinite(sigma)
         last_sigma = sigma
@@ -177,7 +181,7 @@ def forwardpropagation(x, y, weights, nodes, is_bias, biases, method):
     return output, prediction
 
 
-def test(x, y, weights, nodes, is_bias, biases, method = 'sigmoid'):
+def test(x, y, weights, nodes, is_bias, biases, method):
     # print(f'========================================== start testing ===================================================')
     predictions = []
     for index, row in x.iterrows():
@@ -226,20 +230,30 @@ def read_numbers():
     return x_train, y_train, x_test, y_test
 
 def read_penguins():
-    train_data = pd.read_csv('penguins.csv')
-    test_data = pd.read_csv('penguins.csv')
-    y_train = train_data.loc[:, 'species']
-    x_train = train_data.iloc[:, 1:]
-    y_test = test_data.loc[:, 'species']
-    x_test = test_data.iloc[:, 1:]
+    data = pd.read_csv('penguins.csv')
+    data = data.sample(frac = 1)
+    y_train = data.loc[:, 'species']
+    x_train = data.iloc[:, 1:]
+    y_test = data.loc[:, 'species']
+    x_test = data.iloc[:, 1:]
+
+    # x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.10, shuffle=True)
+    
+    # x_train = x_train.reset_index()
+    # x_test = x_test.reset_index()
+    # y_train = y_train.reset_index()
+    # y_test = y_test.reset_index()
+    
     y_train = penguins_encoding(y_train)
     y_test = penguins_encoding(y_test)
     y_train = labelEncoder(y_train)
     y_test = labelEncoder(y_test)
+   
     x_train['gender'] = x_train['gender'].replace(['male', 'female', NaN], [0, 1, 0])
     x_train['gender'] = x_train['gender'].astype('int')
     x_test['gender'] = x_test['gender'].replace(['male', 'female', NaN], [0, 1, 0])
     x_test['gender'] = x_test['gender'].astype('int')
+    
     return x_train, y_train, x_test, y_test
 # x_train, y_train, x_test, y_test = read_numbers()
 x_train, y_train, x_test, y_test = read_penguins()
@@ -253,6 +267,7 @@ def main(activation_func, nodes, eta, epochs, is_bias):
 
 def run(activation_func, nodes, eta, epochs, is_bias):
     weights, biases = build_NN(x_train, y_train, is_bias, nodes, epochs, eta, activation_func)
+    print(f'========================================== start testing ===================================================')
     train_accuracy = test(x_train, y_train, weights, nodes, is_bias, biases, activation_func)
     test_accuracy = test(x_test, y_test, weights, nodes, is_bias, biases, activation_func)
     print(f'train accuracy = {train_accuracy}, test accuracy = {test_accuracy}')
@@ -261,5 +276,5 @@ def run(activation_func, nodes, eta, epochs, is_bias):
 
 if __name__ == '__main__':
     nodes = [3,4]
-    main('sigmoid', nodes, 0.1, 1000, True)
-    # main('tanh', nodes, 0.15, 5, False)
+    # main('sigmoid', nodes, 0.1, 10000, False)
+    main('tanh', nodes, 0.1, 1000, False)
